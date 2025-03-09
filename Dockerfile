@@ -8,6 +8,8 @@ RUN yarn install --frozen-lockfile
 
 COPY . .
 
+COPY .docker/.docker.env .env
+
 RUN yarn build
 
 FROM nginx:alpine-slim
