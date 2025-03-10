@@ -7,11 +7,13 @@ A modern web application that streamlines customer request management through Li
 ## Features
 
 ### 1. Secure Authentication
+
 - Simple and secure login interface
 - Integration with Linear API authentication
 - Role-based access control
 
 ### 2. Project Access and Management
+
 ![Customer Access](/public/customer-access.png)
 
 - View all accessible projects
@@ -20,6 +22,7 @@ A modern web application that streamlines customer request management through Li
 - Timeline view for project progress
 
 ### 3. Customer Request Management
+
 ![Create Customer Request](/public/create-customer-request.png)
 
 - Create detailed customer requests with rich text editing
@@ -28,6 +31,7 @@ A modern web application that streamlines customer request management through Li
 - Markdown support for request descriptions
 
 ### 4. Administrative Controls
+
 ![Access Admin](/public/access-admin.png)
 
 - Comprehensive project overview
@@ -51,12 +55,14 @@ VITE_TEAM_ID=your_team_id
 ```
 
 #### API Key Usage
+
 - Authenticate with Linear's GraphQL API
 - Access project data and issues
 - Create and manage customer requests
 - Handle user permissions
 
 #### Team ID Usage
+
 - Restricts project visibility to a specific team
 - Provides admin-level access control
 - Helps organize and filter projects
@@ -69,21 +75,22 @@ VITE_TEAM_ID=your_team_id
 The application uses Linear's GraphQL API with the following main queries and mutations:
 
 1. **Project Queries**
+
    ```graphql
    # Fetch projects with teams
    query {
-     teams {
-       nodes {
-         projects {
-           nodes {
-             id
-             name
-             description
-             state
-           }
-         }
-       }
-     }
+   	teams {
+   		nodes {
+   			projects {
+   				nodes {
+   					id
+   					name
+   					description
+   					state
+   				}
+   			}
+   		}
+   	}
    }
    ```
 
@@ -91,18 +98,18 @@ The application uses Linear's GraphQL API with the following main queries and mu
    ```graphql
    # Create issue with customer request label
    mutation CreateIssueWithLabel($input: IssueCreateInput!) {
-     issueCreate(input: $input) {
-       success
-       issue {
-         id
-         title
-         labels {
-           nodes {
-             name
-           }
-         }
-       }
-     }
+   	issueCreate(input: $input) {
+   		success
+   		issue {
+   			id
+   			title
+   			labels {
+   				nodes {
+   					name
+   				}
+   			}
+   		}
+   	}
    }
    ```
 
@@ -120,14 +127,17 @@ src/
 ### Key Dependencies
 
 1. **@apollo/client (^3.12.5)**
+
    - GraphQL client for Linear API integration
    - Handles caching and state management
 
 2. **@mdxeditor/editor (^3.20.0)**
+
    - Rich text editing for customer requests
    - Markdown support and formatting
 
 3. **antd (^5.23.0)**
+
    - UI component library
    - Provides theme support and responsive design
 
@@ -138,10 +148,12 @@ src/
 ### Performance Optimizations
 
 1. **Code Splitting**
+
    - Route-based code splitting with React Router
    - Lazy loading of heavy components
 
 2. **Caching**
+
    - Apollo Client caching for GraphQL queries
    - Browser caching for static assets
 
@@ -153,6 +165,7 @@ src/
 ### Security Measures
 
 1. **API Security**
+
    - Environment variables for sensitive data
    - API key validation
    - CORS configuration
@@ -172,6 +185,7 @@ src/
 ## Getting Started
 
 ### Prerequisites
+
 - Node.js 20 or higher
 - Linear API key
 - npm or yarn package manager
@@ -179,17 +193,20 @@ src/
 ### Installation
 
 1. Clone the repository:
+
 ```bash
-git clone https://github.com/feyyazcankose/linear-customer-views.git
-cd linear-customer-views
+git clone https://github.com/uplide/dev-up-track.git
+cd dev-up-track
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
 
 3. Create a `.env` file in the root directory:
+
 ```env
 # Required: Your Linear API key for authentication
 VITE_LINEAR_API_KEY=your_linear_api_key
@@ -201,6 +218,7 @@ VITE_TEAM_ID=your_team_id
 > Note: You can find your Linear API key in Linear's settings under "API" section. The Team ID can be found in the team settings or in the URL when viewing team projects.
 
 4. Start the development server:
+
 ```bash
 npm run dev
 ```

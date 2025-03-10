@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        PROJECT_KEY = "linear-customer-views"
+        PROJECT_KEY = "dev-up-track"
         DOCKER_REPO = "yourdockerrepo.com/${PROJECT_KEY}"
         DOCKER_CREDENTIALS_ID = "nexus"
         GITHUB_CREDENTIALS_ID = 'github'
@@ -10,7 +10,7 @@ pipeline {
     stages {
         stage('Git Clone') {
             steps {
-                git url: 'https://github.com/feyyazcankose/linear-customer-views', branch: 'main'
+                git url: 'https://github.com/uplide/dev-up-track', branch: 'main'
             }
         }
         stage('BUILD') {
