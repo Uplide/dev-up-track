@@ -210,7 +210,7 @@ const ProjectIssues: FC = () => {
   return (
     <>
       <Helmet>
-        <title>{projectData?.name ? `${projectData.name} Issues` : 'Project Issues'} - Linear View</title>
+        <title>{projectData?.name ? `${projectData.name} Issues` : 'Project Issues'} - Up Dev Track</title>
       </Helmet>
 
       <Layout style={{ minHeight: '100vh', background: isDarkMode ? '#141414' : '#fff' }}>
@@ -259,9 +259,10 @@ const ProjectIssues: FC = () => {
                     onChange={setSelectedLabels}
                     style={{ width: 200 }}
                     options={Array.from(
-                      new Set(projectData?.issues?.nodes.flatMap(issue => 
-                        issue.labels?.nodes.map(label => label.name) || []
-                      ))
+                      new Set(projectData?.issues?.nodes.flatMap(issue => {
+                        const labels = issue.labels?.nodes || [];
+                        return labels.map(label => label.name);
+                      }).filter(Boolean))
                     ).map(label => ({
                       label,
                       value: label
