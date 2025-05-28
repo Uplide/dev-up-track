@@ -39,10 +39,8 @@ const Header: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>{organization?.name ? `${organization.name} - Linear View` : 'Linear View'}</title>
-        {organization?.logoUrl && (
-          <link rel="icon" type="image/png" href={organization.logoUrl} />
-        )}
+        <title>{organization?.name ? `${organization.name} - Up Dev Track` : 'Up Dev Track'}</title>
+        <link rel="icon" type="image/png" href="https://uplide.com/wp-content/uploads/2025/05/blue-fav.png" />
       </Helmet>
 
       <div style={{
@@ -58,7 +56,8 @@ const Header: React.FC = () => {
           <NavLink to="/projects" style={{ display: 'flex', alignItems: 'center', gap: '8px' }} >
             {organization?.logoUrl && (
               <img 
-                src={organization.logoUrl} 
+                // src={organization.logoUrl} 
+                src="https://uplide.com/wp-content/uploads/2025/05/blue-fav.png"
                 alt={organization.name}
                 style={{ height: '24px', width: 'auto' }}
               />

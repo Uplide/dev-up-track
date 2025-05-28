@@ -98,7 +98,7 @@ export default function CustomerRequest() {
   return (
     <>
       <Helmet>
-        <title>Create Customer Request - Linear View</title>
+        <title>Create Customer Request - Up Dev Track</title>
       </Helmet>
 
       <div style={{
