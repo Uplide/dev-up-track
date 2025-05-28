@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button, Form, Input, Typography, theme, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import { BugOutlined, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
+import { EyeOutlined, EyeInvisibleOutlined, CodeOutlined } from '@ant-design/icons';
 import { checkProjectExists } from '../services/linearClient';
 import { Helmet } from 'react-helmet-async';
 import { useTheme } from '../context/ThemeContext';
@@ -45,7 +45,7 @@ export default function Login() {
   return (
     <>
       <Helmet>
-        <title>Login - Linear View</title>
+        <title>Login - Up Dev Track</title>
         <link rel="icon" type="image/png" href="/linear-logo.png" />
       </Helmet>
 
@@ -79,9 +79,9 @@ export default function Login() {
           }} />
           
           <div style={{ position: 'relative', textAlign: 'center', color: '#fff' }}>
-            <BugOutlined style={{ fontSize: '64px', marginBottom: '24px' }} />
+            <CodeOutlined style={{ fontSize: '64px', marginBottom: '24px' }} />
             <Title level={2} style={{ color: '#fff', marginBottom: '16px', margin: 0 }}>
-              Linear View
+              Up Dev Track
             </Title>
             <Text style={{ fontSize: '16px', opacity: 0.8 }}>
               Track, manage, and resolve issues efficiently

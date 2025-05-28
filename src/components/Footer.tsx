@@ -21,7 +21,7 @@ export default function Footer() {
       }}>
         Powered by{' '}
         <a 
-          href="https://github.com/feyyazcankose" 
+          href="https://uplide.com" 
           target="_blank" 
           rel="noopener noreferrer"
           style={{ 
@@ -29,7 +29,7 @@ export default function Footer() {
             textDecoration: 'none'
           }}
         >
-          feyyazcankose
+          ❤ Uplide
         </a>
       </Text>
     </div>

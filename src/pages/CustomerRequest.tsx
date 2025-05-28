@@ -20,7 +20,7 @@ import {
   CreateLink,
   InsertImage,
   InsertTable,
-  ListsToggle
+  ListsToggle,
 } from '@mdxeditor/editor';
 import '@mdxeditor/editor/style.css';
 import './CustomerRequest.css';
@@ -40,7 +40,6 @@ const priorityOptions = [
   { label: 'Low', value: 'LOW' },
   { label: 'No Priority', value: 'NO_PRIORITY' },
 ];
-
 export default function CustomerRequest() {
   const [loading, setLoading] = useState(false);
   const { isDarkMode } = useTheme();
@@ -98,7 +97,7 @@ export default function CustomerRequest() {
   return (
     <>
       <Helmet>
-        <title>Create Customer Request - Linear View</title>
+        <title>Create Customer Request - Up Dev Track</title>
       </Helmet>
 
       <div style={{
