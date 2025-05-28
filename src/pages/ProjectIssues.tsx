@@ -1,10 +1,10 @@
 import type { FC } from 'react';
 import { useState, useEffect } from 'react';
-import { Table, Typography, Spin, Space, Tag, Modal, Layout, Row, Col, Card, Timeline, Input, Select, Button, message } from 'antd';
+import { Table, Typography, Spin, Space, Tag, Modal, Layout, Row, Col, Card, Timeline, Input, Select, Button, message, Progress } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { CalendarOutlined, SearchOutlined, PlusOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getProjectIssues } from '../services/linearClient';
+import { getProjectIssues, GET_PROJECT_TEAM, client } from '../services/linearClient';
 import { useTheme } from '../context/ThemeContext';
 import { Helmet } from 'react-helmet-async';
 import ReactMarkdown from 'react-markdown';
@@ -17,10 +17,19 @@ interface ProjectMilestone {
   name: string;
   description?: string;
   targetDate?: string;
+  issues?: {
+    nodes: Array<{
+      id: string;
+      state: {
+        type: string;
+      };
+    }>;
+  };
 }
 
 interface Issue {
   id: string;
+  identifier: string;
   title: string;
   description?: string;
   priority: number;
@@ -55,6 +64,28 @@ interface ProjectData {
   };
 }
 
+const PriorityBars: FC<{ level?: number }> = ({ level }) => {
+  // 0: No priority (0 bar), 1: Urgent (4 bar), 2: High (3 bar), 3: Normal (2 bar), 4: Low (1 bar)
+  const safeLevel = typeof level === 'number' && level >= 0 && level <= 4 ? level : 0;
+  const filledBars = safeLevel === 0 ? 0 : 5 - safeLevel;
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 2, height: 16 }}>
+      {[0, 1, 2, 3].map(i => (
+        <div
+          key={i}
+          style={{
+            width: 4,
+            height: 6 + (i + 1) * 3,
+            borderRadius: 2,
+            background: i < filledBars ? '#6B7280' : '#e5e7eb',
+            transition: 'background 0.2s',
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
 const ProjectIssues: FC = () => {
   const [loading, setLoading] = useState(true);
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
@@ -64,6 +95,7 @@ const ProjectIssues: FC = () => {
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
   const [selectedStates, setSelectedStates] = useState<string[]>([]);
   const [selectedMilestone, setSelectedMilestone] = useState<string>('all');
+  const [allLabels, setAllLabels] = useState<Array<{ name: string; color: string }>>([]);
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const { isDarkMode } = useTheme();
@@ -74,7 +106,20 @@ const ProjectIssues: FC = () => {
 
   useEffect(() => {
     fetchProjectIssues();
+    fetchAllLabels();
   }, [projectId]);
+
+  useEffect(() => {
+    fetchProjectIssues();
+  }, [debouncedLabels, debouncedStates]);
+
+  useEffect(() => {
+    if (projectData?.issues?.nodes) {
+      projectData.issues.nodes.forEach(issue => {
+        console.log('Issue:', issue.identifier, 'Priority:', issue.priority);
+      });
+    }
+  }, [projectData]);
 
   const fetchProjectIssues = async () => {
     if (!projectId) {
@@ -83,7 +128,8 @@ const ProjectIssues: FC = () => {
     }
 
     try {
-      const data = await getProjectIssues(projectId);
+      setLoading(true);
+      const data = await getProjectIssues(projectId, debouncedLabels, debouncedStates);
       console.log('Fetched project data:', data);
       setProjectData(data);
     } catch (error) {
@@ -91,6 +137,27 @@ const ProjectIssues: FC = () => {
       message.error('Failed to fetch issues');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAllLabels = async () => {
+    if (!projectId) return;
+
+    try {
+      const { data } = await client.query({
+        query: GET_PROJECT_TEAM,
+        variables: { projectId },
+      });
+
+      console.log('Team Data:', data);
+      console.log('All Labels:', data?.project?.teams?.nodes?.[0]?.labels?.nodes);
+
+      if (data?.project?.teams?.nodes?.[0]?.labels?.nodes) {
+        setAllLabels(data.project.teams.nodes[0].labels.nodes);
+        console.log('Set Labels:', data.project.teams.nodes[0].labels.nodes);
+      }
+    } catch (error) {
+      console.error('Error fetching labels:', error);
     }
   };
 
@@ -126,18 +193,19 @@ const ProjectIssues: FC = () => {
     });
   };
 
-  const filteredIssues = projectData?.issues?.nodes.filter(issue => {
+  const calculateCompletionPercentage = (milestone: ProjectMilestone) => {
+    if (!milestone.issues?.nodes?.length) return 0;
+    
+    const totalIssues = milestone.issues.nodes.length;
+    const completedIssues = milestone.issues.nodes.filter(
+      issue => issue.state.type === 'completed'
+    ).length;
+    
+    return Math.round((completedIssues / totalIssues) * 100);
+  };
+
+  const filteredIssues = projectData?.issues?.nodes.filter((issue: Issue) => {
     if (debouncedSearchText && !issue.title.toLowerCase().includes(debouncedSearchText.toLowerCase())) {
-      return false;
-    }
-
-    if (debouncedLabels.length > 0 && !issue.labels?.nodes.some(label => 
-      debouncedLabels.includes(label.name)
-    )) {
-      return false;
-    }
-
-    if (debouncedStates.length > 0 && !debouncedStates.includes(issue.state.name)) {
       return false;
     }
 
@@ -149,6 +217,17 @@ const ProjectIssues: FC = () => {
   }) || [];
 
   const columns: ColumnsType<Issue> = [
+    {
+      title: 'ID',
+      dataIndex: 'identifier',
+      key: 'identifier',
+      width: 100,
+      render: (identifier: string) => (
+        <Text type="secondary" style={{ fontFamily: 'monospace' }}>
+          {identifier}
+        </Text>
+      ),
+    },
     {
       title: 'Title',
       dataIndex: 'title',
@@ -163,11 +242,14 @@ const ProjectIssues: FC = () => {
       title: 'Priority',
       dataIndex: 'priority',
       key: 'priority',
-      render: (priority: number) => (
-        <Tag color={priorityMap[priority as keyof typeof priorityMap]?.color}>
-          {priorityMap[priority as keyof typeof priorityMap]?.text}
-        </Tag>
-      ),
+      render: (priority: number | undefined) => {
+        const safeLevel = typeof priority === 'number' && priority >= 0 && priority <= 4 ? priority : 0;
+        return (
+          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <PriorityBars level={safeLevel} />
+          </span>
+        );
+      },
     },
     {
       title: 'Status',
@@ -180,9 +262,21 @@ const ProjectIssues: FC = () => {
     {
       title: 'Milestone',
       key: 'milestone',
-      render: (_, record: Issue) => 
+      render: (_, record: Issue) =>
         record.projectMilestone && (
-          <Tag color="blue">{record.projectMilestone.name}</Tag>
+          <Tag
+            style={{
+              background: 'transparent',
+              border: '1px solid #d1d5db',
+              color: '#6B7280',
+              fontWeight: 500,
+              borderRadius: 6,
+              fontSize: 14,
+              padding: '2px 12px'
+            }}
+          >
+            {record.projectMilestone.name}
+          </Tag>
         ),
     },
     {
@@ -192,7 +286,20 @@ const ProjectIssues: FC = () => {
       render: (labels?: { nodes: Array<{ name: string; color: string }> }) => (
         <Space size={[0, 8]} wrap>
           {labels?.nodes?.map((label, index) => (
-            <Tag key={index} color={label.color}>
+            <Tag 
+              key={index} 
+              style={{ 
+                margin: '2px',
+                padding: '0 8px',
+                height: '22px',
+                lineHeight: '20px',
+                borderRadius: '4px',
+                background: 'transparent',
+                border: `1px solid ${label.color}`,
+                color: label.color,
+                fontWeight: 500
+              }}
+            >
               {label.name}
             </Tag>
           ))}
@@ -258,15 +365,41 @@ const ProjectIssues: FC = () => {
                     value={selectedLabels}
                     onChange={setSelectedLabels}
                     style={{ width: 200 }}
-                    options={Array.from(
-                      new Set(projectData?.issues?.nodes.flatMap(issue => {
-                        const labels = issue.labels?.nodes || [];
-                        return labels.map(label => label.name);
-                      }).filter(Boolean))
-                    ).map(label => ({
-                      label,
-                      value: label
+                    options={allLabels.map(label => ({
+                      label: label.name,
+                      value: label.name,
+                      color: label.color
                     }))}
+                    optionLabelProp="label"
+                    optionRender={(option) => (
+                      <Space>
+                        <div
+                          style={{
+                            width: 12,
+                            height: 12,
+                            borderRadius: '50%',
+                            backgroundColor: option.data.color,
+                            display: 'inline-block',
+                            marginRight: 8
+                          }}
+                        />
+                        {option.label}
+                      </Space>
+                    )}
+                    tagRender={(props) => {
+                      const { label, value, closable, onClose } = props;
+                      const option = allLabels.find(l => l.name === value);
+                      return (
+                        <Tag
+                          color={option?.color}
+                          closable={closable}
+                          onClose={onClose}
+                          style={{ marginRight: 3 }}
+                        >
+                          {label}
+                        </Tag>
+                      );
+                    }}
                   />
                 </Space>
 
@@ -359,25 +492,46 @@ const ProjectIssues: FC = () => {
                               onClick={() => setSelectedMilestone(milestone.id)}
                               style={{ 
                                 cursor: 'pointer',
-                                padding: '8px',
-                                background: selectedMilestone === milestone.id
-                                  ? (isDarkMode ? '#2a2a2a' : '#f0f0f0') 
-                                  : 'transparent',
+                                padding: '4px 8px',
+                                background: 'transparent',
+                                border: selectedMilestone === milestone.id ? '2px solid #6B7280' : '1px solid #d1d5db',
+                                color: '#6B7280',
                                 borderRadius: '4px',
-                                marginBottom: '4px'
+                                marginBottom: '4px',
+                                minHeight: 'unset',
+                                display: 'flex',
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: '8px',
+                                fontWeight: 500
                               }}
                             >
-                              <Text strong>{milestone.name}</Text>
-                              {milestone.targetDate && (
-                                <div style={{ fontSize: '12px', color: '#888', marginTop: 4 }}>
-                                  Target: {formatDate(milestone.targetDate)}
-                                </div>
-                              )}
-                              {milestone.description && (
-                                <div style={{ marginTop: 4, fontSize: '14px' }}>
-                                  {milestone.description}
-                                </div>
-                              )}
+                              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                <Text strong style={{ color: '#6B7280' }}>{milestone.name}</Text>
+                                {milestone.targetDate && (
+                                  <div style={{ fontSize: '12px', color: '#bdbdbd', marginTop: 2 }}>
+                                    Target: {formatDate(milestone.targetDate)}
+                                  </div>
+                                )}
+                                {milestone.description && (
+                                  <div style={{ marginTop: 2, fontSize: '13px', color: '#bdbdbd' }}>
+                                    {milestone.description}
+                                  </div>
+                                )}
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', alignSelf: 'center' }}>
+                                <Progress 
+                                  type="circle" 
+                                  percent={calculateCompletionPercentage(milestone)} 
+                                  size={[24, 24]}
+                                  strokeColor={isDarkMode ? '#1890ff' : '#1677ff'}
+                                  format={() => ''}
+                                />
+                                <Text type="secondary" style={{ fontSize: '14px' }}>
+                                  {calculateCompletionPercentage(milestone)}%
+                                </Text>
+                              </div>
                             </div>
                           </Timeline.Item>
                         ))}
@@ -398,6 +552,11 @@ const ProjectIssues: FC = () => {
         >
           {selectedIssue && (
             <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+              <div>
+                <Text type="secondary" style={{ fontFamily: 'monospace' }}>
+                  {selectedIssue.identifier}
+                </Text>
+              </div>
               <div>
                 <Text strong style={{ color: isDarkMode ? '#fff' : undefined }}>Status:</Text>
                 <Tag color={selectedIssue.state.color} style={{ marginLeft: 8 }}>

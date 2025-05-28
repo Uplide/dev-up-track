@@ -9,7 +9,7 @@ interface Project {
 	state: string;
 }
 
-const client = new ApolloClient({
+export const client = new ApolloClient({
 	uri: "https://api.linear.app/graphql",
 	cache: new InMemoryCache(),
 	headers: {
@@ -71,7 +71,7 @@ export const getProjects = async () => {
 };
 
 export const GET_PROJECT_ISSUES = gql`
-	query GetProjectIssues($projectId: String!) {
+	query GetProjectIssues($projectId: String!, $labelNames: [String!], $stateNames: [String!]) {
 		project(id: $projectId) {
 			id
 			name
@@ -79,9 +79,15 @@ export const GET_PROJECT_ISSUES = gql`
 			startDate
 			targetDate
 			state
-			issues(filter: { parent: { null: true } }) {
+			issues(
+				filter: {
+					labels: { name: { in: $labelNames } }
+					state: { name: { in: $stateNames } }
+				}
+			) {
 				nodes {
 					id
+					identifier
 					title
 					description
 					priority
@@ -112,6 +118,14 @@ export const GET_PROJECT_ISSUES = gql`
 					name
 					description
 					targetDate
+					issues {
+						nodes {
+							id
+							state {
+								type
+							}
+						}
+					}
 				}
 			}
 		}
@@ -139,7 +153,7 @@ export const GET_PROJECT_EXISTS = gql`
 	}
 `;
 
-export const getProjectIssues = async (projectId: string) => {
+export const getProjectIssues = async (projectId: string, labelNames?: string[], stateNames?: string[]) => {
 	try {
 		// Proje erişim kontrolü
 		const projectAccess = localStorage.getItem("projectAccess");
@@ -149,8 +163,13 @@ export const getProjectIssues = async (projectId: string) => {
 
 		const { data } = await client.query({
 			query: GET_PROJECT_ISSUES,
-			variables: { projectId },
+			variables: { 
+				projectId,
+				labelNames: labelNames?.length ? labelNames : null,
+				stateNames: stateNames?.length ? stateNames : null
+			},
 		});
+
 		return data.project;
 	} catch (error) {
 		console.error("Error fetching project issues:", error);
@@ -207,7 +226,7 @@ export const getOrganization = async () => {
 };
 
 // Team ID'yi almak için query
-const GET_PROJECT_TEAM = gql`
+export const GET_PROJECT_TEAM = gql`
 	query GetProjectTeam($projectId: String!) {
 		project(id: $projectId) {
 			teams {
@@ -217,6 +236,7 @@ const GET_PROJECT_TEAM = gql`
 						nodes {
 							id
 							name
+							color
 						}
 					}
 				}
