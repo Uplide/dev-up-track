@@ -204,17 +204,18 @@ const ProjectIssues: FC = () => {
     return Math.round((completedIssues / totalIssues) * 100);
   };
 
-  const filteredIssues = projectData?.issues?.nodes.filter((issue: Issue) => {
-    if (debouncedSearchText && !issue.title.toLowerCase().includes(debouncedSearchText.toLowerCase())) {
-      return false;
-    }
+  const filteredIssues = projectData?.issues?.nodes
+    .filter((issue: Issue) => {
+      if (debouncedSearchText && !issue.title.toLowerCase().includes(debouncedSearchText.toLowerCase())) {
+        return false;
+      }
 
-    if (selectedMilestone !== 'all' && (!issue.projectMilestone || issue.projectMilestone.id !== selectedMilestone)) {
-      return false;
-    }
+      if (selectedMilestone !== 'all' && (!issue.projectMilestone || issue.projectMilestone.id !== selectedMilestone)) {
+        return false;
+      }
 
-    return true;
-  }) || [];
+      return true;
+    }) || [];
 
   const columns: ColumnsType<Issue> = [
     {
@@ -222,6 +223,7 @@ const ProjectIssues: FC = () => {
       dataIndex: 'identifier',
       key: 'identifier',
       width: 100,
+      sorter: (a: Issue, b: Issue) => a.identifier.localeCompare(b.identifier),
       render: (identifier: string) => (
         <Text type="secondary" style={{ fontFamily: 'monospace' }}>
           {identifier}
@@ -232,6 +234,7 @@ const ProjectIssues: FC = () => {
       title: 'Title',
       dataIndex: 'title',
       key: 'title',
+      sorter: (a: Issue, b: Issue) => a.title.localeCompare(b.title),
       render: (text: string, record: Issue) => (
         <a onClick={() => showIssueDetails(record)} style={{ color: isDarkMode ? '#1890ff' : '#1677ff' }}>
           {text}
@@ -242,6 +245,11 @@ const ProjectIssues: FC = () => {
       title: 'Priority',
       dataIndex: 'priority',
       key: 'priority',
+      sorter: (a: Issue, b: Issue) => {
+        const priorityA = typeof a.priority === 'number' ? a.priority : 0;
+        const priorityB = typeof b.priority === 'number' ? b.priority : 0;
+        return priorityA - priorityB;
+      },
       render: (priority: number | undefined) => {
         const safeLevel = typeof priority === 'number' && priority >= 0 && priority <= 4 ? priority : 0;
         return (
@@ -255,6 +263,7 @@ const ProjectIssues: FC = () => {
       title: 'Status',
       dataIndex: ['state', 'name'],
       key: 'status',
+      sorter: (a: Issue, b: Issue) => a.state.name.localeCompare(b.state.name),
       render: (text: string, record: Issue) => (
         <Tag color={record.state.color}>{text}</Tag>
       ),
@@ -262,6 +271,11 @@ const ProjectIssues: FC = () => {
     {
       title: 'Milestone',
       key: 'milestone',
+      sorter: (a: Issue, b: Issue) => {
+        const milestoneA = a.projectMilestone?.name || '';
+        const milestoneB = b.projectMilestone?.name || '';
+        return milestoneA.localeCompare(milestoneB);
+      },
       render: (_, record: Issue) =>
         record.projectMilestone && (
           <Tag
@@ -283,12 +297,17 @@ const ProjectIssues: FC = () => {
       title: 'Labels',
       dataIndex: 'labels',
       key: 'labels',
+      sorter: (a: Issue, b: Issue) => {
+        const labelsA = a.labels?.nodes?.map(l => l.name).join(', ') || '';
+        const labelsB = b.labels?.nodes?.map(l => l.name).join(', ') || '';
+        return labelsA.localeCompare(labelsB);
+      },
       render: (labels?: { nodes: Array<{ name: string; color: string }> }) => (
         <Space size={[0, 8]} wrap>
           {labels?.nodes?.map((label, index) => (
-            <Tag 
-              key={index} 
-              style={{ 
+            <Tag
+              key={index}
+              style={{
                 margin: '2px',
                 padding: '0 8px',
                 height: '22px',
@@ -310,6 +329,15 @@ const ProjectIssues: FC = () => {
       title: 'Created',
       dataIndex: 'createdAt',
       key: 'createdAt',
+      sorter: (a: Issue, b: Issue) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      render: (date: string) => formatDateTime(date),
+    },
+    {
+      title: 'Updated',
+      dataIndex: 'updatedAt',
+      key: 'updatedAt',
+      sorter: (a: Issue, b: Issue) => new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime(),
+      defaultSortOrder: 'descend',
       render: (date: string) => formatDateTime(date),
     },
   ];
@@ -408,10 +436,16 @@ const ProjectIssues: FC = () => {
                     <Spin size="large" />
                   </div>
                 ) : (
-                  <Table 
-                    columns={columns} 
-                    dataSource={filteredIssues} 
+                  <Table
+                    columns={columns}
+                    dataSource={filteredIssues}
                     rowKey="id"
+                    pagination={{
+                      pageSize: 50,
+                      showSizeChanger: false,
+                      showTotal: (total, range) =>
+                        `${range[0]}-${range[1]} of ${total} issues`,
+                    }}
                     style={{
                       background: isDarkMode ? '#1f1f1f' : '#fff',
                       borderRadius: '8px',

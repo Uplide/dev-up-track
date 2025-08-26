@@ -80,6 +80,7 @@ export const GET_PROJECT_ISSUES = gql`
 			targetDate
 			state
 			issues(
+				first: 200
 				filter: {
 					labels: { name: { in: $labelNames } }
 					state: { name: { in: $stateNames } }
