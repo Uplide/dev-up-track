@@ -92,6 +92,14 @@ export const GET_PROJECT_ISSUES = gql`
 					title
 					description
 					priority
+					estimate
+					cycle {
+						id
+						name
+						number
+						startsAt
+						endsAt
+					}
 					state {
 						name
 						type
