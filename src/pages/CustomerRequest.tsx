@@ -14,6 +14,7 @@ import {
   markdownShortcutPlugin,
   toolbarPlugin,
   tablePlugin,
+  imagePlugin,
   UndoRedo,
   BoldItalicUnderlineToggles,
   BlockTypeSelect,
@@ -40,6 +41,7 @@ const priorityOptions = [
   { label: 'Low', value: 'LOW' },
   { label: 'No Priority', value: 'NO_PRIORITY' },
 ];
+
 export default function CustomerRequest() {
   const [loading, setLoading] = useState(false);
   const { isDarkMode } = useTheme();
@@ -49,6 +51,22 @@ export default function CustomerRequest() {
 
   const onEditorChange = (content: string) => {
     form.setFieldsValue({ description: content });
+  };
+
+  // Image upload handler
+  const imageUploadHandler = async (image: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        // Convert image to base64 data URL
+        const result = reader.result as string;
+        resolve(result);
+      };
+      reader.onerror = () => {
+        reject(new Error('Failed to read image file'));
+      };
+      reader.readAsDataURL(image);
+    });
   };
 
   const onFinish = async (values: CustomerRequestForm) => {
@@ -172,6 +190,10 @@ export default function CustomerRequest() {
                     thematicBreakPlugin(),
                     markdownShortcutPlugin(),
                     tablePlugin(),
+                    imagePlugin({
+                      imageUploadHandler,
+                      imageAutocompleteSuggestions: []
+                    }),
                     toolbarPlugin({
                       toolbarContents: () => (
                         <>
