@@ -33,6 +33,14 @@ interface Issue {
   title: string;
   description?: string;
   priority: number;
+  estimate?: number;
+  cycle?: {
+    id: string;
+    name: string;
+    number: number;
+    startsAt: string;
+    endsAt: string;
+  };
   state: {
     name: string;
     type: string;
@@ -94,6 +102,7 @@ const ProjectIssues: FC = () => {
   const [searchText, setSearchText] = useState('');
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
   const [selectedStates, setSelectedStates] = useState<string[]>([]);
+  const [selectedCycles, setSelectedCycles] = useState<string[]>([]);
   const [selectedMilestone, setSelectedMilestone] = useState<string>('all');
   const [allLabels, setAllLabels] = useState<Array<{ name: string; color: string }>>([]);
   const { projectId } = useParams<{ projectId: string }>();
@@ -103,6 +112,7 @@ const ProjectIssues: FC = () => {
   const debouncedSearchText = useDebounce(searchText, 300);
   const debouncedLabels = useDebounce(selectedLabels, 300);
   const debouncedStates = useDebounce(selectedStates, 300);
+  const debouncedCycles = useDebounce(selectedCycles, 300);
 
   useEffect(() => {
     fetchProjectIssues();
@@ -111,7 +121,7 @@ const ProjectIssues: FC = () => {
 
   useEffect(() => {
     fetchProjectIssues();
-  }, [debouncedLabels, debouncedStates]);
+  }, [debouncedLabels, debouncedStates, debouncedCycles]);
 
   useEffect(() => {
     if (projectData?.issues?.nodes) {
@@ -214,8 +224,39 @@ const ProjectIssues: FC = () => {
         return false;
       }
 
+      if (debouncedCycles.length > 0 && (!issue.cycle || !debouncedCycles.includes(`Cycle ${issue.cycle.number}`))) {
+        return false;
+      }
+
       return true;
     }) || [];
+
+  // Calculate estimate totals
+  const calculateEstimates = () => {
+    const totalEstimate = filteredIssues.reduce((sum, issue) => sum + (issue.estimate || 0), 0);
+    const completedEstimate = filteredIssues
+      .filter(issue => issue.state.type === 'completed')
+      .reduce((sum, issue) => sum + (issue.estimate || 0), 0);
+    const remainingEstimate = totalEstimate - completedEstimate;
+
+    return { totalEstimate, completedEstimate, remainingEstimate };
+  };
+
+  const { totalEstimate, completedEstimate, remainingEstimate } = calculateEstimates();
+
+  // Get unique cycles for filter - use number and create display name
+  const allCycles = Array.from(
+    new Set(
+      projectData?.issues?.nodes
+        .map(issue => {
+          if (!issue.cycle) return null;
+          return `Cycle ${issue.cycle.number}`;
+        })
+        .filter(Boolean)
+    )
+  ).sort();
+  
+  
 
   const columns: ColumnsType<Issue> = [
     {
@@ -267,6 +308,47 @@ const ProjectIssues: FC = () => {
       render: (text: string, record: Issue) => (
         <Tag color={record.state.color}>{text}</Tag>
       ),
+    },
+    {
+      title: 'Estimate',
+      dataIndex: 'estimate',
+      key: 'estimate',
+      width: 100,
+      sorter: (a: Issue, b: Issue) => {
+        const estimateA = a.estimate || 0;
+        const estimateB = b.estimate || 0;
+        return estimateA - estimateB;
+      },
+      render: (estimate: number | undefined) => (
+        <Text type="secondary" style={{ fontFamily: 'monospace' }}>
+          {estimate || '-'}
+        </Text>
+      ),
+    },
+    {
+      title: 'Cycle',
+      key: 'cycle',
+      sorter: (a: Issue, b: Issue) => {
+        const cycleA = a.cycle?.number || 0;
+        const cycleB = b.cycle?.number || 0;
+        return cycleA - cycleB;
+      },
+      render: (_, record: Issue) =>
+        record.cycle && (
+          <Tag
+            style={{
+              background: 'transparent',
+              border: '1px solid #1890ff',
+              color: '#1890ff',
+              fontWeight: 500,
+              borderRadius: 6,
+              fontSize: 14,
+              padding: '2px 12px'
+            }}
+          >
+            Cycle {record.cycle.number}
+          </Tag>
+        ),
     },
     {
       title: 'Milestone',
@@ -351,7 +433,7 @@ const ProjectIssues: FC = () => {
       <Layout style={{ minHeight: '100vh', background: isDarkMode ? '#141414' : '#fff' }}>
         <div style={{ padding: '24px' }}>
           <Row gutter={24}>
-            <Col span={16}>
+            <Col span={18}>
               <Space direction="vertical" size="large" style={{ width: '100%' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Title level={2} style={{ margin: 0, color: isDarkMode ? '#fff' : undefined }}>
@@ -429,6 +511,17 @@ const ProjectIssues: FC = () => {
                       );
                     }}
                   />
+                  <Select
+                    mode="multiple"
+                    placeholder="Filter by cycle"
+                    value={selectedCycles}
+                    onChange={setSelectedCycles}
+                    style={{ width: 200 }}
+                    options={allCycles.map(cycle => ({
+                      label: cycle,
+                      value: cycle
+                    }))}
+                  />
                 </Space>
 
                 {loading ? (
@@ -452,10 +545,40 @@ const ProjectIssues: FC = () => {
                     }}
                   />
                 )}
+
+                {/* Estimate Totals */}
+                <div style={{ 
+                  marginTop: 16, 
+                  padding: 16, 
+                  background: isDarkMode ? '#1f1f1f' : '#f5f5f5',
+                  borderRadius: 8,
+                  border: `1px solid ${isDarkMode ? '#303030' : '#d9d9d9'}`
+                }}>
+                  <Space size="large">
+                    <div>
+                      <Text type="secondary">Total Estimate:</Text>
+                      <Text strong style={{ marginLeft: 8, color: isDarkMode ? '#fff' : undefined }}>
+                        {totalEstimate}
+                      </Text>
+                    </div>
+                    <div>
+                      <Text type="secondary">Completed:</Text>
+                      <Text strong style={{ marginLeft: 8, color: '#52c41a' }}>
+                        {completedEstimate}
+                      </Text>
+                    </div>
+                    <div>
+                      <Text type="secondary">Remaining:</Text>
+                      <Text strong style={{ marginLeft: 8, color: '#fa8c16' }}>
+                        {remainingEstimate}
+                      </Text>
+                    </div>
+                  </Space>
+                </div>
               </Space>
             </Col>
 
-            <Col span={8}>
+            <Col span={6}>
               <Card
                 title={
                   <Space>
@@ -483,6 +606,24 @@ const ProjectIssues: FC = () => {
                           Target: {formatDate(projectData.targetDate)}
                         </Tag>
                       )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Text type="secondary">Project Estimates</Text>
+                    <div style={{ marginTop: 8 }}>
+                      <div style={{ marginBottom: 4 }}>
+                        <Text type="secondary" style={{ fontSize: 12 }}>Total Estimate: </Text>
+                        <Text strong>{totalEstimate}</Text>
+                      </div>
+                      <div style={{ marginBottom: 4 }}>
+                        <Text type="secondary" style={{ fontSize: 12 }}>Completed: </Text>
+                        <Text strong style={{ color: '#52c41a' }}>{completedEstimate}</Text>
+                      </div>
+                      <div>
+                        <Text type="secondary" style={{ fontSize: 12 }}>Remaining: </Text>
+                        <Text strong style={{ color: '#fa8c16' }}>{remainingEstimate}</Text>
+                      </div>
                     </div>
                   </div>
 
@@ -600,13 +741,31 @@ const ProjectIssues: FC = () => {
 
               <div>
                 <Text strong style={{ color: isDarkMode ? '#fff' : undefined }}>Priority:</Text>
-                <Tag 
+                <Tag
                   color={priorityMap[selectedIssue.priority as keyof typeof priorityMap]?.color}
                   style={{ marginLeft: 8 }}
                 >
                   {priorityMap[selectedIssue.priority as keyof typeof priorityMap]?.text}
                 </Tag>
               </div>
+
+              {selectedIssue.estimate && (
+                <div>
+                  <Text strong style={{ color: isDarkMode ? '#fff' : undefined }}>Estimate:</Text>
+                  <Tag color="purple" style={{ marginLeft: 8 }}>
+                    {selectedIssue.estimate}
+                  </Tag>
+                </div>
+              )}
+
+              {selectedIssue.cycle && (
+                <div>
+                  <Text strong style={{ color: isDarkMode ? '#fff' : undefined }}>Cycle:</Text>
+                  <Tag color="blue" style={{ marginLeft: 8 }}>
+                    Cycle {selectedIssue.cycle.number}
+                  </Tag>
+                </div>
+              )}
 
               {selectedIssue.projectMilestone && (
                 <div>
