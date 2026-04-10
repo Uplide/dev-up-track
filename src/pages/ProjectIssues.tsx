@@ -838,6 +838,7 @@ const ProjectIssues: FC = () => {
           onCancel={() => setIsModalVisible(false)}
           footer={null}
           width={800}
+          rootClassName="issue-detail-modal"
         >
           {selectedIssue && (
             <Space direction="vertical" size="middle" style={{ width: '100%' }}>
@@ -912,12 +913,10 @@ const ProjectIssues: FC = () => {
 
               <div>
                 <Text strong style={{ color: isDarkMode ? '#fff' : undefined }}>Description:</Text>
-                <div 
-                  style={{ 
+                <div
+                  className={`issue-description-card ${isDarkMode ? 'dark' : 'light'}`}
+                  style={{
                     marginTop: 8,
-                    padding: 16,
-                    background: isDarkMode ? '#141414' : '#f5f5f5',
-                    borderRadius: 8,
                     color: isDarkMode ? '#fff' : undefined
                   }}
                 >
