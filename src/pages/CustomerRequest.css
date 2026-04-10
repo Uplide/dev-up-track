@@ -1,6 +1,32 @@
+.customer-request-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.customer-request-card {
+  border-radius: 14px;
+  box-shadow: 0 12px 28px rgba(17, 24, 39, 0.08);
+}
+
+.customer-request-card.dark {
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+}
+
+.customer-request-form .ant-form-item {
+  margin-bottom: 14px;
+}
+
+.customer-request-form .ant-input,
+.customer-request-form .ant-select-selector {
+  border-radius: 10px !important;
+  min-height: 40px;
+}
+
 .editor-wrapper {
   border: 1px solid #d9d9d9;
-  border-radius: 6px;
+  border-radius: 10px;
   overflow: hidden;
 }
 
@@ -9,7 +35,7 @@
 }
 
 .editor-wrapper .mdxeditor {
-  min-height: 200px;
+  min-height: 170px;
   background-color: #fff;
   color: #000;
 }
@@ -19,10 +45,9 @@
   color: #fff !important;
 }
 
-/* Editor content styles */
 .editor-content {
-  padding: 16px;
-  min-height: 200px;
+  padding: 14px;
+  min-height: 170px;
   outline: none;
   background-color: #fff;
   color: #000;
@@ -46,11 +71,10 @@
   margin: 8px 0;
 }
 
-/* Toolbar styles */
 .editor-wrapper .mdxeditor-toolbar {
   border-bottom: 1px solid #d9d9d9;
   background-color: #fafafa;
-  padding: 8px;
+  padding: 6px 8px;
 }
 
 .editor-wrapper.dark .mdxeditor-toolbar {
@@ -59,11 +83,10 @@
   color: #fff !important;
 }
 
-/* Button styles */
 .editor-wrapper .mdxeditor-toolbar button {
   color: #000;
-  margin: 0 4px;
-  padding: 4px 8px;
+  margin: 0 2px;
+  padding: 4px 6px;
   border-radius: 4px;
   border: none;
   background: transparent;
@@ -86,7 +109,6 @@
   background-color: #303030;
 }
 
-/* Dropdown styles */
 .editor-wrapper .mdxeditor-toolbar select {
   background-color: #fff;
   color: #000;
@@ -102,12 +124,11 @@
   border-color: #303030;
 }
 
-/* Content area styles */
 .editor-wrapper .mdxeditor-content-editable {
   padding: 16px;
+  overflow-x: auto;
 }
 
-/* Link and code styles */
 .editor-wrapper a {
   color: #1890ff;
 }
@@ -126,7 +147,6 @@
   background-color: #262626;
 }
 
-/* Table styles */
 .editor-wrapper table {
   border-collapse: collapse;
   width: 100%;
@@ -154,7 +174,6 @@
   background-color: #1f1f1f;
 }
 
-/* List styles */
 .editor-wrapper ul,
 .editor-wrapper ol {
   padding-left: 24px;
@@ -173,7 +192,6 @@
   list-style-type: decimal;
 }
 
-/* Nested list styles */
 .editor-wrapper ul ul,
 .editor-wrapper ol ol,
 .editor-wrapper ul ol,
@@ -181,7 +199,6 @@
   margin: 4px 0;
 }
 
-/* Placeholder styles */
 .editor-content[data-placeholder]:empty::before {
   content: attr(data-placeholder);
   color: #999;
@@ -192,12 +209,99 @@
   color: #666;
 }
 
-/* Dark mode specific overrides */
-.editor-wrapper.dark .mdxeditor * {
+.editor-wrapper.dark .mdxeditor [contenteditable="true"] {
   background-color: #141414 !important;
   color: #fff !important;
 }
 
-.editor-wrapper.dark .mdxeditor-toolbar * {
-  background-color: #1f1f1f !important;
+.editor-wrapper .mdxeditor img,
+.editor-wrapper [class*="_imageWrapper_"] img {
+  display: block;
+  max-width: 100% !important;
+  height: auto !important;
+  border-radius: 8px;
+  margin: 8px 0;
+}
+
+.editor-wrapper [class*="_imageWrapper_"] {
+  max-width: 100%;
+}
+
+[class*="_dialogOverlay_"] {
+  backdrop-filter: blur(2px);
+}
+
+[class*="_dialogContent_"],
+[class*="_largeDialogContent_"] {
+  border-radius: 14px !important;
+  border: 1px solid #e5e7eb !important;
+  background: #ffffff !important;
+  box-shadow: 0 20px 40px rgba(17, 24, 39, 0.2) !important;
+  min-width: 440px;
+}
+
+[class*="_dialogTitle_"] {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+form[class*="_multiFieldForm_"] {
+  gap: 10px;
+  padding: 10px;
+}
+
+form[class*="_multiFieldForm_"] [class*="_formField_"] {
+  gap: 6px;
+}
+
+form[class*="_multiFieldForm_"] [class*="_formField_"] label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+[class*="_dialogInput_"],
+[class*="_textInput_"],
+input[type="file"] {
+  border: 1px solid #d1d5db !important;
+  border-radius: 10px !important;
+  padding: 8px 10px !important;
+  background: #fff !important;
+  color: #111827 !important;
+}
+
+[class*="_primaryButton_"],
+[class*="_secondaryButton_"] {
+  border-radius: 10px !important;
+  min-height: 34px;
+  padding: 6px 12px !important;
+}
+
+html.dark [class*="_dialogContent_"],
+html.dark [class*="_largeDialogContent_"] {
+  border-color: #3a3a3a !important;
+  background: #1f1f1f !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45) !important;
+}
+
+html.dark form[class*="_multiFieldForm_"] [class*="_formField_"] label {
+  color: #d1d5db;
+}
+
+html.dark [class*="_dialogInput_"],
+html.dark [class*="_textInput_"],
+html.dark input[type="file"] {
+  border-color: #4b5563 !important;
+  background: #141414 !important;
+  color: #f3f4f6 !important;
+}
+
+@media (max-width: 768px) {
+  .customer-request-header {
+    align-items: flex-start;
+  }
+
+  .customer-request-card {
+    border-radius: 12px;
+  }
 }

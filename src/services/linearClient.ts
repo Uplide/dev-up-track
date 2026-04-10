@@ -131,6 +131,7 @@ export const GET_PROJECT_ISSUES = gql`
 						nodes {
 							id
 							state {
+								name
 								type
 							}
 						}
@@ -377,6 +378,21 @@ export const createIssue = async (input: CreateIssueInput) => {
 		return response.data.issueCreate.issue;
 	} catch (error) {
 		console.error("Error creating issue:", error);
+		const apolloError = error as {
+			message?: string;
+			graphQLErrors?: Array<{ message?: string; extensions?: { userPresentableMessage?: string } }>;
+			networkError?: { result?: { errors?: Array<{ message?: string }> } };
+		};
+
+		const graphQLErrorMessage =
+			apolloError?.graphQLErrors?.[0]?.extensions?.userPresentableMessage ||
+			apolloError?.graphQLErrors?.[0]?.message ||
+			apolloError?.networkError?.result?.errors?.[0]?.message;
+
+		if (graphQLErrorMessage) {
+			throw new Error(graphQLErrorMessage);
+		}
+
 		throw error;
 	}
 };

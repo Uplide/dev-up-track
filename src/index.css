@@ -118,6 +118,49 @@ html.dark .ant-input:focus {
   border-color: #1668dc;
 }
 
+.issues-search-input.ant-input-affix-wrapper {
+  border-radius: 10px;
+  border-color: #d1d5db;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.issues-search-input.ant-input-affix-wrapper .ant-input-prefix {
+  color: #6b7280;
+}
+
+.issues-search-input.ant-input-affix-wrapper:focus,
+.issues-search-input.ant-input-affix-wrapper:focus-within,
+.issues-search-input.ant-input-affix-wrapper:hover {
+  border-color: #1677ff;
+  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.12);
+}
+
+html.dark .issues-search-input.ant-input-affix-wrapper {
+  background-color: #1f1f1f;
+  border-color: #303030;
+  color: #fff;
+}
+
+html.dark .issues-search-input.ant-input-affix-wrapper .ant-input {
+  background-color: transparent;
+  color: #fff;
+}
+
+html.dark .issues-search-input.ant-input-affix-wrapper .ant-input::placeholder {
+  color: #9ca3af;
+}
+
+html.dark .issues-search-input.ant-input-affix-wrapper .ant-input-prefix {
+  color: #9ca3af;
+}
+
+html.dark .issues-search-input.ant-input-affix-wrapper:focus,
+html.dark .issues-search-input.ant-input-affix-wrapper:focus-within,
+html.dark .issues-search-input.ant-input-affix-wrapper:hover {
+  border-color: #4096ff;
+  box-shadow: 0 0 0 2px rgba(64, 150, 255, 0.2);
+}
+
 html.dark .ant-select:not(.ant-select-customize-input) .ant-select-selector {
   background-color: #1f1f1f;
   border-color: #303030;
