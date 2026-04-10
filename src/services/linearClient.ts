@@ -71,7 +71,12 @@ export const getProjects = async () => {
 };
 
 export const GET_PROJECT_ISSUES = gql`
-	query GetProjectIssues($projectId: String!, $labelNames: [String!], $stateNames: [String!]) {
+	query GetProjectIssues(
+		$projectId: String!
+		$labelNames: [String!]
+		$stateNames: [String!]
+		$after: String
+	) {
 		project(id: $projectId) {
 			id
 			name
@@ -81,11 +86,16 @@ export const GET_PROJECT_ISSUES = gql`
 			state
 			issues(
 				first: 200
+				after: $after
 				filter: {
 					labels: { name: { in: $labelNames } }
 					state: { name: { in: $stateNames } }
 				}
 			) {
+				pageInfo {
+					hasNextPage
+					endCursor
+				}
 				nodes {
 					id
 					identifier
@@ -171,16 +181,55 @@ export const getProjectIssues = async (projectId: string, labelNames?: string[],
 			throw new Error("No access to this project");
 		}
 
-		const { data } = await client.query({
-			query: GET_PROJECT_ISSUES,
-			variables: { 
-				projectId,
-				labelNames: labelNames?.length ? labelNames : null,
-				stateNames: stateNames?.length ? stateNames : null
-			},
-		});
+		let after: string | null = null;
+		let hasNextPage = true;
+		let projectMeta: any = null;
+		const allIssuesMap = new Map<string, any>();
 
-		return data.project;
+		while (hasNextPage) {
+			const response: any = await client.query({
+				query: GET_PROJECT_ISSUES,
+				variables: {
+					projectId,
+					labelNames: labelNames?.length ? labelNames : null,
+					stateNames: stateNames?.length ? stateNames : null,
+					after,
+				},
+				fetchPolicy: "network-only",
+			});
+
+			const project = response?.data?.project;
+			if (!project) {
+				throw new Error("Project not found");
+			}
+
+			if (!projectMeta) {
+				projectMeta = {
+					id: project.id,
+					name: project.name,
+					description: project.description,
+					startDate: project.startDate,
+					targetDate: project.targetDate,
+					state: project.state,
+					projectMilestones: project.projectMilestones,
+				};
+			}
+
+			const issues = project.issues?.nodes || [];
+			for (const issue of issues) {
+				allIssuesMap.set(issue.id, issue);
+			}
+
+			hasNextPage = !!project.issues?.pageInfo?.hasNextPage;
+			after = project.issues?.pageInfo?.endCursor || null;
+		}
+
+		return {
+			...projectMeta,
+			issues: {
+				nodes: Array.from(allIssuesMap.values()),
+			},
+		};
 	} catch (error) {
 		console.error("Error fetching project issues:", error);
 		throw error;
