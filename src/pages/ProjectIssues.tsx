@@ -140,7 +140,7 @@ const ProjectIssues: FC = () => {
 
     try {
       setLoading(true);
-      const data = await getProjectIssues(projectId, debouncedLabels, debouncedStates);
+      const data = await getProjectIssues(projectId);
       console.log('Fetched project data:', data);
       setProjectData(data);
     } catch (error) {
@@ -252,6 +252,18 @@ const ProjectIssues: FC = () => {
         return false;
       }
 
+      if (debouncedStates.length > 0 && !debouncedStates.includes(issue.state.name)) {
+        return false;
+      }
+
+      if (debouncedLabels.length > 0) {
+        const issueLabels = issue.labels?.nodes?.map(label => label.name) || [];
+        const hasSelectedLabel = debouncedLabels.some(selectedLabel => issueLabels.includes(selectedLabel));
+        if (!hasSelectedLabel) {
+          return false;
+        }
+      }
+
       if (debouncedCycles.length > 0 && (!issue.cycle || !debouncedCycles.includes(`Cycle ${issue.cycle.number}`))) {
         return false;
       }
@@ -260,17 +272,32 @@ const ProjectIssues: FC = () => {
     }) || [];
 
   // Calculate estimate totals
-  const calculateEstimates = () => {
-    const totalEstimate = filteredIssues.reduce((sum, issue) => sum + (issue.estimate || 0), 0);
-    const completedEstimate = filteredIssues
-      .filter(issue => issue.state.type === 'completed')
+  const calculateEstimates = (issues: Issue[]) => {
+    const totalEstimate = issues.reduce((sum, issue) => sum + (issue.estimate || 0), 0);
+    const completedEstimate = issues
+      .filter(issue =>
+        issue.state.type === 'completed' ||
+        issue.state.type === 'canceled' ||
+        issue.state.type === 'cancelled' ||
+        issue.state.name?.toLowerCase() === 'duplicate'
+      )
       .reduce((sum, issue) => sum + (issue.estimate || 0), 0);
     const remainingEstimate = totalEstimate - completedEstimate;
 
     return { totalEstimate, completedEstimate, remainingEstimate };
   };
 
-  const { totalEstimate, completedEstimate, remainingEstimate } = calculateEstimates();
+  const {
+    totalEstimate: projectTotalEstimate,
+    completedEstimate: projectCompletedEstimate,
+    remainingEstimate: projectRemainingEstimate
+  } = calculateEstimates(projectData?.issues?.nodes || []);
+
+  const {
+    totalEstimate: visibleTotalEstimate,
+    completedEstimate: visibleCompletedEstimate,
+    remainingEstimate: visibleRemainingEstimate
+  } = calculateEstimates(filteredIssues);
 
   // Get unique cycles for filter - use number and create display name
   const allCycles = Array.from(
@@ -625,21 +652,39 @@ const ProjectIssues: FC = () => {
                 }}>
                   <Space size="large">
                     <div>
-                      <Text type="secondary">Total Estimate:</Text>
+                      <Text type="secondary">Project Total Estimate:</Text>
                       <Text strong style={{ marginLeft: 8, color: isDarkMode ? '#fff' : undefined }}>
-                        {totalEstimate}
+                        {projectTotalEstimate}
                       </Text>
                     </div>
                     <div>
-                      <Text type="secondary">Completed:</Text>
+                      <Text type="secondary">Project Completed:</Text>
                       <Text strong style={{ marginLeft: 8, color: '#52c41a' }}>
-                        {completedEstimate}
+                        {projectCompletedEstimate}
                       </Text>
                     </div>
                     <div>
-                      <Text type="secondary">Remaining:</Text>
+                      <Text type="secondary">Project Remaining:</Text>
                       <Text strong style={{ marginLeft: 8, color: '#fa8c16' }}>
-                        {remainingEstimate}
+                        {projectRemainingEstimate}
+                      </Text>
+                    </div>
+                    <div>
+                      <Text type="secondary">Visible Total:</Text>
+                      <Text strong style={{ marginLeft: 8, color: isDarkMode ? '#fff' : undefined }}>
+                        {visibleTotalEstimate}
+                      </Text>
+                    </div>
+                    <div>
+                      <Text type="secondary">Visible Completed:</Text>
+                      <Text strong style={{ marginLeft: 8, color: '#52c41a' }}>
+                        {visibleCompletedEstimate}
+                      </Text>
+                    </div>
+                    <div>
+                      <Text type="secondary">Visible Remaining:</Text>
+                      <Text strong style={{ marginLeft: 8, color: '#fa8c16' }}>
+                        {visibleRemainingEstimate}
                       </Text>
                     </div>
                   </Space>
@@ -683,15 +728,15 @@ const ProjectIssues: FC = () => {
                     <div style={{ marginTop: 8 }}>
                       <div style={{ marginBottom: 4 }}>
                         <Text type="secondary" style={{ fontSize: 12 }}>Total Estimate: </Text>
-                        <Text strong>{totalEstimate}</Text>
+                        <Text strong>{projectTotalEstimate}</Text>
                       </div>
                       <div style={{ marginBottom: 4 }}>
                         <Text type="secondary" style={{ fontSize: 12 }}>Completed: </Text>
-                        <Text strong style={{ color: '#52c41a' }}>{completedEstimate}</Text>
+                        <Text strong style={{ color: '#52c41a' }}>{projectCompletedEstimate}</Text>
                       </div>
                       <div>
                         <Text type="secondary" style={{ fontSize: 12 }}>Remaining: </Text>
-                        <Text strong style={{ color: '#fa8c16' }}>{remainingEstimate}</Text>
+                        <Text strong style={{ color: '#fa8c16' }}>{projectRemainingEstimate}</Text>
                       </div>
                     </div>
                   </div>

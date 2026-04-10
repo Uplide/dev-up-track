@@ -73,8 +73,6 @@ export const getProjects = async () => {
 export const GET_PROJECT_ISSUES = gql`
 	query GetProjectIssues(
 		$projectId: String!
-		$labelNames: [String!]
-		$stateNames: [String!]
 		$after: String
 	) {
 		project(id: $projectId) {
@@ -87,10 +85,6 @@ export const GET_PROJECT_ISSUES = gql`
 			issues(
 				first: 200
 				after: $after
-				filter: {
-					labels: { name: { in: $labelNames } }
-					state: { name: { in: $stateNames } }
-				}
 			) {
 				pageInfo {
 					hasNextPage
@@ -173,7 +167,7 @@ export const GET_PROJECT_EXISTS = gql`
 	}
 `;
 
-export const getProjectIssues = async (projectId: string, labelNames?: string[], stateNames?: string[]) => {
+export const getProjectIssues = async (projectId: string) => {
 	try {
 		// Proje erişim kontrolü
 		const projectAccess = localStorage.getItem("projectAccess");
@@ -191,8 +185,6 @@ export const getProjectIssues = async (projectId: string, labelNames?: string[],
 				query: GET_PROJECT_ISSUES,
 				variables: {
 					projectId,
-					labelNames: labelNames?.length ? labelNames : null,
-					stateNames: stateNames?.length ? stateNames : null,
 					after,
 				},
 				fetchPolicy: "network-only",
