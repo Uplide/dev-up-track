@@ -131,6 +131,7 @@ export const GET_PROJECT_ISSUES = gql`
 						nodes {
 							id
 							state {
+								name
 								type
 							}
 						}

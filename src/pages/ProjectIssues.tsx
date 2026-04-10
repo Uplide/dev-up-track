@@ -21,6 +21,7 @@ interface ProjectMilestone {
     nodes: Array<{
       id: string;
       state: {
+        name?: string;
         type: string;
       };
     }>;
@@ -208,7 +209,16 @@ const ProjectIssues: FC = () => {
     
     const totalIssues = milestone.issues.nodes.length;
     const completedIssues = milestone.issues.nodes.filter(
-      issue => issue.state.type === 'completed'
+      issue => {
+        const stateType = issue.state.type?.toLowerCase();
+        const stateName = issue.state.name?.toLowerCase();
+        return (
+          stateType === 'completed' ||
+          stateType === 'canceled' ||
+          stateType === 'cancelled' ||
+          stateName === 'duplicate'
+        );
+      }
     ).length;
     
     return Math.round((completedIssues / totalIssues) * 100);
