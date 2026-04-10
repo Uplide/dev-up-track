@@ -189,6 +189,81 @@ html.dark .ant-modal-title {
   color: #fff;
 }
 
+.issue-description-card {
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: linear-gradient(180deg, #f9fafb 0%, #f3f4f6 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  overflow: hidden;
+}
+
+.issue-description-card.dark {
+  border-color: #303030;
+  background: linear-gradient(180deg, #171717 0%, #121212 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.issue-description-card > *:first-child {
+  margin-top: 0;
+}
+
+.issue-description-card > *:last-child {
+  margin-bottom: 0;
+}
+
+.issue-description-card p,
+.issue-description-card li,
+.issue-description-card blockquote {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.issue-description-card img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  margin: 10px 0;
+}
+
+.issue-description-card.dark img {
+  border-color: #3f3f46;
+}
+
+.issue-description-card pre {
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 12px;
+  border-radius: 10px;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+.issue-description-card code {
+  overflow-wrap: anywhere;
+}
+
+.issue-description-card table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+
+.issue-description-card th,
+.issue-description-card td {
+  border: 1px solid #d1d5db;
+  padding: 8px;
+  text-align: left;
+}
+
+.issue-description-card.dark th,
+.issue-description-card.dark td {
+  border-color: #3f3f46;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
