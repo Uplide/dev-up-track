@@ -156,7 +156,7 @@ export default function CustomerRequest() {
 
     setLoading(true);
     try {
-      const title = `[CS] ${values.title}`;
+      const title = `[CR] ${values.title}`;
       const description = `**Customer Name:** ${values.customerName}\n\n${values.description}`;
       const inlineImagePayloadSize = getInlineImagePayloadSize(description);
 
