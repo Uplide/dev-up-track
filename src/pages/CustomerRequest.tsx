@@ -55,8 +55,11 @@ export default function CustomerRequest() {
 
   const MAX_DIMENSION = 1200;
   const TARGET_QUALITY = 0.7; // ~30% compression target
-  const MAX_SINGLE_IMAGE_BYTES = 550 * 1024;
-  const MAX_INLINE_IMAGE_CHARS = 1_800_000;
+  const MIN_QUALITY = 0.35;
+  const MAX_SINGLE_IMAGE_BYTES = 140 * 1024;
+  const LINEAR_DESCRIPTION_LIMIT = 250000;
+  const SAFE_DESCRIPTION_LIMIT = 240000;
+  const MAX_INLINE_IMAGE_CHARS = 230000;
 
   const readAsDataUrl = (blob: Blob): Promise<string> =>
     new Promise((resolve, reject) => {
@@ -88,34 +91,42 @@ export default function CustomerRequest() {
       const targetHeight = Math.max(1, Math.round(image.height * scale));
 
       const canvas = document.createElement('canvas');
-      canvas.width = targetWidth;
-      canvas.height = targetHeight;
       const ctx = canvas.getContext('2d');
 
       if (!ctx) {
         return readAsDataUrl(file);
       }
 
-      ctx.drawImage(image, 0, 0, targetWidth, targetHeight);
-
-      // Convert to JPEG for stronger compression and smaller payloads.
+      // Keep reducing quality and, if needed, dimensions until it is small enough.
+      let workingWidth = targetWidth;
+      let workingHeight = targetHeight;
       let quality = TARGET_QUALITY;
-      let blob: Blob | null = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
+      let blob: Blob | null = null;
 
-      while (blob && blob.size > MAX_SINGLE_IMAGE_BYTES && quality > 0.45) {
-        quality -= 0.1;
-        blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
+      while (workingWidth >= 360 && workingHeight >= 360) {
+        canvas.width = workingWidth;
+        canvas.height = workingHeight;
+        ctx.clearRect(0, 0, workingWidth, workingHeight);
+        ctx.drawImage(image, 0, 0, workingWidth, workingHeight);
+
+        quality = TARGET_QUALITY;
+        while (quality >= MIN_QUALITY) {
+          blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
+          if (blob && blob.size <= MAX_SINGLE_IMAGE_BYTES) {
+            return readAsDataUrl(blob);
+          }
+          quality -= 0.08;
+        }
+
+        workingWidth = Math.round(workingWidth * 0.85);
+        workingHeight = Math.round(workingHeight * 0.85);
       }
 
-      if (!blob) {
-        throw new Error('Image optimization failed');
+      if (blob) {
+        return readAsDataUrl(blob);
       }
 
-      if (blob.size > MAX_SINGLE_IMAGE_BYTES) {
-        throw new Error('Image is too large. Please upload a smaller image.');
-      }
-
-      return readAsDataUrl(blob);
+      throw new Error('Image optimization failed');
     } finally {
       URL.revokeObjectURL(objectUrl);
     }
@@ -148,6 +159,16 @@ export default function CustomerRequest() {
       const title = `[CS] ${values.title}`;
       const description = `**Customer Name:** ${values.customerName}\n\n${values.description}`;
       const inlineImagePayloadSize = getInlineImagePayloadSize(description);
+
+      if (description.length > LINEAR_DESCRIPTION_LIMIT) {
+        message.error(`Description exceeds Linear limit (${description.length}/${LINEAR_DESCRIPTION_LIMIT}).`);
+        return;
+      }
+
+      if (description.length > SAFE_DESCRIPTION_LIMIT) {
+        message.error('Description is too large. Please reduce image size/quantity.');
+        return;
+      }
 
       if (inlineImagePayloadSize > MAX_INLINE_IMAGE_CHARS) {
         message.error('Total image size is too large. Please use fewer/smaller images.');
