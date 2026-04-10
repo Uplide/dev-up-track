@@ -1,4 +1,4 @@
-# Linear Customer Views
+# Linear Customer Views 
 
 A modern web application that streamlines customer request management through Linear's project management system. This application provides an intuitive interface for creating, tracking, and managing customer requests while maintaining seamless integration with Linear's powerful project management features.
 

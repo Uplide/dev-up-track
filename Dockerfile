@@ -12,7 +12,7 @@ COPY .docker/.docker.env .env
 
 RUN yarn build
 
-FROM nginx:alpine-slim
+FROM --platform=linux/amd64 nginx:alpine-slim
 
 COPY --from=builder /app/dist /usr/share/nginx/html
 
